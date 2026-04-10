@@ -1,0 +1,10 @@
+// Export all admin pages for easier imports
+export { default as AdLogin } from './pages/Login';
+export { default as AdSignup } from './pages/Signup';
+export { default as AdDashboard } from './pages/Dashboard';
+export { default as AdProducts } from './pages/Products';
+export { default as AdOrders } from './pages/Orders';
+export { default as AdCustomers } from './pages/Customers';
+export { default as AdCategories } from './pages/Categories';
+export { default as AdProfile } from './pages/Profile';
+export { default as AdLayout } from './components/Layout';

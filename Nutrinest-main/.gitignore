@@ -1,0 +1,5 @@
+node_modules/
+.env
+
+NUTRINEST-FRONTEND-master/node_modules/
+NUTRINEST-BACKEND-master/node_modules/

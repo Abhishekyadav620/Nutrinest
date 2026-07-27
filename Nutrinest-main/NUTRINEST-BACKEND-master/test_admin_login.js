@@ -6,11 +6,11 @@ require('dotenv').config();
 const testLogin = async () => {
     try {
         console.log("Connecting to DB...");
-        await mongoose.connect(process.env.MONGO_URI);
+        await mongoose.connect(process.env.MONGODB_URI);
         console.log("Connected.");
         
-        const email = 'admin@nutrinest.com';
-        const password = 'nutrinest123';
+        const email = 'admin123@gmail.com';
+        const password = 'admin123';
         
         console.log(`Searching for admin with email: ${email}`);
         const admin = await Admin.findOne({ email });

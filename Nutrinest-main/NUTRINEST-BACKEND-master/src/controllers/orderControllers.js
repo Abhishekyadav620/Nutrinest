@@ -1,10 +1,12 @@
 const Order = require("../models/order");
+const User = require("../models/user");
 const mongoose = require("mongoose");
 const Cart = require("../models/cart");
 const Product = require("../models/product");
 const razorpay = require("../utils/razorpayHelper");
 const socketHelper = require("../utils/socket");
 const crypto = require("crypto");
+const { sendOrderStatusEmail } = require("../services/orderEmailService");
 
 exports.createOrder = async (req, res, next) => {
   try {
@@ -93,7 +95,7 @@ exports.createOrder = async (req, res, next) => {
           : {},
       totalAmount: total,
       status: ["RAZORPAY", "UPI", "CARD"].includes(paymentMethod) ? "paid" : "pending",
-      deliveryStatus: "pending",
+      deliveryStatus: "Order Placed",
     });
 
     // decrement product stock for each ordered item (ensure non-negative)
@@ -175,16 +177,56 @@ exports.getAllOrders = async (req, res, next) => {
 exports.updateOrderStatus = async (req, res, next) => {
   try {
     const { status } = req.body;
-    
+
+    const validStatuses = ["Order Placed", "Processing", "Shipped", "Out for Delivery", "Delivered", "Cancelled"];
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({ message: "Invalid status value" });
+    }
+
     if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
       return res.status(400).json({ message: "Invalid Order ID format" });
     }
 
-    const order = await Order.findById(req.params.id);
+    const order = await Order.findById(req.params.id)
+      .populate("user", "name email")
+      .populate("items.product", "name image");
     if (!order) return res.status(404).json({ message: `Order with ID ${req.params.id} not found in database.` });
 
+    const oldStatus = order.deliveryStatus;
     order.deliveryStatus = status;
     await order.save();
+
+    // Send email notification if status changed
+    let emailRecipient = order.address?.email;
+    if (order.user) {
+      try {
+        const userDoc = await User.findById(order.user._id || order.user);
+        if (userDoc && userDoc.email) {
+          emailRecipient = userDoc.email;
+        }
+      } catch (err) {
+        console.error("Failed to fetch latest user email during status update:", err);
+      }
+    }
+
+    console.log("[EMAIL_DEBUG] order.user:", order.user);
+    console.log("[EMAIL_DEBUG] order.address:", order.address);
+    console.log("[EMAIL_DEBUG] Resolved emailRecipient:", emailRecipient);
+
+    if (oldStatus !== status && emailRecipient) {
+      try {
+        await sendOrderStatusEmail(emailRecipient, {
+          orderId: order._id.toString().slice(-8),
+          customerName: order.user?.name || order.address?.name || "Customer",
+          totalAmount: order.totalAmount,
+          currentStatus: status,
+          items: order.items,
+        });
+        console.log(`[EMAIL] Status update email sent successfully to ${emailRecipient}`);
+      } catch (emailError) {
+        console.error("Failed to send order status email:", emailError);
+      }
+    }
 
     res.json({ message: "Order status updated", order });
   } catch (err) {

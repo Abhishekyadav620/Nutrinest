@@ -8,6 +8,7 @@ const productRoutes = require("./routes/product");
 const cartRoutes = require("./routes/cart");
 const orderRoutes = require("./routes/order");
 const reviewRoutes = require("./routes/review");
+const paymentRoutes = require("./routes/payment");
 
 const adminRoutes = require("./routes/admin"); // Import admin routes
 const errorHandler = require("./middleware/errorHandler");
@@ -25,12 +26,13 @@ app.use("/api/products", productRoutes);
 app.use("/api/cart", cartRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/reviews", reviewRoutes);
+app.use("/api/payment", paymentRoutes);
 app.use("/api/admin", adminRoutes); // Mount admin routes
 
 // error handler
 app.use(errorHandler);
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5008;
 const http = require("http");
 const server = http.createServer(app);
 

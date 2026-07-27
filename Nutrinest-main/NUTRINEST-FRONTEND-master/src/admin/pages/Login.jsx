@@ -60,10 +60,11 @@ const Login = () => {
 
         <form onSubmit={submit}>
           <div className="mb-3">
-            <label className="form-label small">Email</label>
+            <label className="form-label small">Username / Email</label>
             <input
               className="form-control"
-              type="email"
+              type="text"
+              placeholder="Enter username or email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -94,7 +95,7 @@ const Login = () => {
 
         <div className="mt-3 p-2 bg-light border rounded">
           <small className="text-muted">
-            Demo: <strong>admin@gmail.com</strong> / <strong>admin123</strong>
+            Demo: <strong>admin123@gmail.com</strong> / <strong>admin123</strong>
           </small>
         </div>
       </div>

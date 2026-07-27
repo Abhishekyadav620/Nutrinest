@@ -93,8 +93,8 @@ export default function EditProfileModal({ open, initialData = {}, onClose, onSa
             </div>
 
             <div className="col-md-6">
-              <label className="form-label">Email</label>
-              <input className="form-control" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required />
+              <label className="form-label">Username / Email</label>
+              <input className="form-control" type="text" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required />
             </div>
 
             <div className="col-md-6">

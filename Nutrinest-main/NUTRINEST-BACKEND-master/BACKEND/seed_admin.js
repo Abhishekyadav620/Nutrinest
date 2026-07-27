@@ -5,9 +5,9 @@ require('dotenv').config();
 const create = async () => {
     try {
         console.log("Connecting to DB...");
-        await mongoose.connect(process.env.MONGO_URI);
+        await mongoose.connect(process.env.MONGODB_URI);
         
-        const email = 'admin@nutrinest.com';
+        const email = 'admin_123';
         const password = 'admin123';
         
         const exists = await Admin.findOne({ email });

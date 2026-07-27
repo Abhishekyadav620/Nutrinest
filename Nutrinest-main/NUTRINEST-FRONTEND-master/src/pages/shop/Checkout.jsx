@@ -4,6 +4,9 @@ import { toast } from "react-hot-toast";
 import { useCart } from "../../context/CartContext";
 import axiosClient from "../../api/axiosClient";
 
+const isDatabaseProductId = (id) =>
+  typeof id === "string" && /^[a-f\d]{24}$/i.test(id);
+
 const Checkout = () => {
   const navigate = useNavigate();
   const { state } = useLocation();
@@ -80,46 +83,95 @@ const Checkout = () => {
         ]
       : cart.map((item) => ({ product: item._id || item.id || item.productId, quantity: item.quantity }));
 
-    // If payment method is not COD, simulate a payment gateway flow
-    if (form.paymentMethod !== "cod") {
-      const loadingToast = toast.loading("Processing payment...");
-      try {
-        if (form.paymentMethod === "card") {
-          if (!card.number || !card.name || !card.expiry || !card.cvv) {
-            toast.dismiss(loadingToast);
-            toast.error("Please enter card details to continue");
-            return;
-          }
-        } else if (form.paymentMethod === "upi") {
-          if (!upiId) {
-            toast.dismiss(loadingToast);
-            toast.error("Please enter UPI ID to continue");
-            return;
-          }
-        }
-
-        // Simulate async payment (replace with real gateway integration)
-        await new Promise((res) => setTimeout(res, 1200));
-        toast.dismiss(loadingToast);
-        toast.success("Payment successful", { style: { background: "#ecfdf5", color: "#065f46", fontWeight: 600 } });
-      } catch (err) {
-        toast.dismiss(loadingToast);
-        toast.error("Payment failed, please try another method");
-        return;
-      }
+    // Demo/fallback cards use IDs such as "p1". They look like products in
+    // the UI, but do not exist in MongoDB and therefore cannot be ordered.
+    // Validate before opening Razorpay so a successful payment always has a
+    // real product that the backend can turn into an order.
+    if (!items.length || items.some((item) => !isDatabaseProductId(item.product))) {
+      toast.error(
+        "One or more products are no longer available. Please return to the products page and add an available item before paying.",
+        { position: "top-right" }
+      );
+      return;
     }
 
+    // COD flow
+    if (form.paymentMethod === "cod") {
+      try {
+        await axiosClient.post("/orders", {
+          address,
+          paymentMethod: "COD",
+          items,
+        });
+        if (!isBuyNow) clearCart();
+        toast.success("Order placed successfully!", { position: "top-right", duration: 4000, style: { background: "#ecfdf5", color: "#065f46", fontWeight: 600 } });
+        navigate("/order-success");
+      } catch (err) {
+        toast.error("Order failed: " + (err?.response?.data?.message || err.message || "Unknown error"), { position: "top-right" });
+      }
+      return;
+    }
+
+    // Razorpay flow for card/UPI
+    const loadingToast = toast.loading("Initializing payment...");
     try {
-      await axiosClient.post("/orders", {
-        address,
-        paymentMethod: form.paymentMethod === "cod" ? "COD" : form.paymentMethod.toUpperCase(),
+      const { data } = await axiosClient.post("/payment/create-order", {
+        amount: total,
         items,
       });
-      if (!isBuyNow) clearCart();
-      toast.success("Order placed successfully!", { position: "top-right", duration: 4000, style: { background: "#ecfdf5", color: "#065f46", fontWeight: 600 } });
-      navigate("/order-success");
+
+      toast.dismiss(loadingToast);
+
+      const options = {
+        key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+        amount: data.order.amount,
+        currency: data.order.currency,
+        name: "NutriNest",
+        description: "Payment for order",
+        order_id: data.order.id,
+        handler: async function (response) {
+          const verifyToast = toast.loading("Verifying payment...");
+          try {
+            const verifyData = {
+              razorpayOrderId: response.razorpay_order_id,
+              razorpayPaymentId: response.razorpay_payment_id,
+              razorpaySignature: response.razorpay_signature,
+              address,
+              paymentMethod: "RAZORPAY",
+              items,
+            };
+
+            await axiosClient.post("/payment/verify", verifyData);
+            toast.dismiss(verifyToast);
+            if (!isBuyNow) clearCart();
+            toast.success("Payment successful! Order placed.", { position: "top-right", duration: 4000, style: { background: "#ecfdf5", color: "#065f46", fontWeight: 600 } });
+            navigate("/order-success");
+          } catch (err) {
+            toast.dismiss(verifyToast);
+            toast.error("Payment verification failed: " + (err?.response?.data?.message || err.message || "Unknown error"), { position: "top-right" });
+          }
+        },
+        prefill: {
+          name: form.firstName + " " + form.lastName,
+          email: form.email,
+          contact: form.phone,
+          method: form.paymentMethod === "upi" ? "upi" : (form.paymentMethod === "card" ? "card" : undefined),
+        },
+        theme: {
+          color: "#82D173",
+        },
+        modal: {
+          ondismiss: function () {
+            toast.error("Payment cancelled by user", { position: "top-right" });
+          },
+        },
+      };
+
+      const rzp = new window.Razorpay(options);
+      rzp.open();
     } catch (err) {
-      toast.error("Order failed: " + (err?.response?.data?.message || err.message || "Unknown error"), { position: "top-right" });
+      toast.dismiss(loadingToast);
+      toast.error("Payment initialization failed: " + (err?.response?.data?.message || err.message || "Unknown error"), { position: "top-right" });
     }
   };
 
@@ -191,45 +243,23 @@ const Checkout = () => {
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               {/* Card option */}
-              <label className={`cursor-pointer p-4 rounded-lg border transition-shadow flex flex-col gap-3 ${form.paymentMethod === "card" ? "border-green-500 shadow-lg" : "border-gray-200 hover:shadow"}`}>
-                <div className="flex items-center gap-3">
-                  <div className="text-2xl">💳</div>
-                  <div>
-                    <div className="font-medium">Credit / Debit Card</div>
-                    <div className="text-sm text-gray-500">Visa, MasterCard, Rupay</div>
-                  </div>
-                  <input type="radio" name="paymentMethod" value="card" checked={form.paymentMethod === "card"} onChange={handleChange} className="ml-auto accent-[#82D173]" />
+              <label className={`cursor-pointer p-4 rounded-lg border transition-shadow flex items-center gap-3 ${form.paymentMethod === "card" ? "border-green-500 shadow-lg" : "border-gray-200 hover:shadow"}`}>
+                <div className="text-2xl">💳</div>
+                <div>
+                  <div className="font-medium">Credit / Debit Card</div>
+                  <div className="text-sm text-gray-500">Visa, MasterCard, Rupay</div>
                 </div>
-
-                {form.paymentMethod === "card" && (
-                  <div className="mt-1 grid grid-cols-1 gap-3">
-                    <input type="text" placeholder="Card number" value={card.number} onChange={(e) => setCard({ ...card, number: e.target.value })} className="w-full border p-3 rounded-lg focus:border-[#82D173] outline-none" />
-                    <div className="grid grid-cols-2 gap-3">
-                      <input type="text" placeholder="Name on card" value={card.name} onChange={(e) => setCard({ ...card, name: e.target.value })} className="w-full border p-3 rounded-lg focus:border-[#82D173] outline-none" />
-                      <input type="text" placeholder="MM/YY" value={card.expiry} onChange={(e) => setCard({ ...card, expiry: e.target.value })} className="w-full border p-3 rounded-lg focus:border-[#82D173] outline-none" />
-                    </div>
-                    <input type="password" placeholder="CVV" value={card.cvv} onChange={(e) => setCard({ ...card, cvv: e.target.value })} className="w-36 border p-3 rounded-lg focus:border-[#82D173] outline-none" />
-                  </div>
-                )}
+                <input type="radio" name="paymentMethod" value="card" checked={form.paymentMethod === "card"} onChange={handleChange} className="ml-auto accent-[#82D173]" />
               </label>
 
               {/* UPI option */}
-              <label className={`cursor-pointer p-4 rounded-lg border transition-shadow flex flex-col gap-3 ${form.paymentMethod === "upi" ? "border-green-500 shadow-lg" : "border-gray-200 hover:shadow"}`}>
-                <div className="flex items-center gap-3">
-                  <div className="text-2xl">📲</div>
-                  <div>
-                    <div className="font-medium">UPI</div>
-                    <div className="text-sm text-gray-500">Google Pay, PhonePe, BHIM</div>
-                  </div>
-                  <input type="radio" name="paymentMethod" value="upi" checked={form.paymentMethod === "upi"} onChange={handleChange} className="ml-auto accent-[#82D173]" />
+              <label className={`cursor-pointer p-4 rounded-lg border transition-shadow flex items-center gap-3 ${form.paymentMethod === "upi" ? "border-green-500 shadow-lg" : "border-gray-200 hover:shadow"}`}>
+                <div className="text-2xl">📲</div>
+                <div>
+                  <div className="font-medium">UPI</div>
+                  <div className="text-sm text-gray-500">Google Pay, PhonePe, BHIM</div>
                 </div>
-
-                {form.paymentMethod === "upi" && (
-                  <div className="mt-1">
-                    <input type="text" placeholder="UPI ID (e.g. your@bank)" value={upiId} onChange={(e) => setUpiId(e.target.value)} className="w-full border p-3 rounded-lg focus:border-[#82D173] outline-none" />
-                    <p className="text-sm text-gray-500 mt-2">You'll confirm payment via your UPI app.</p>
-                  </div>
-                )}
+                <input type="radio" name="paymentMethod" value="upi" checked={form.paymentMethod === "upi"} onChange={handleChange} className="ml-auto accent-[#82D173]" />
               </label>
 
               {/* COD option */}

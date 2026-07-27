@@ -10,12 +10,15 @@ import Home from "./pages/shop/Home";
 import Login from "./pages/auth/Login";
 import Signup from "./pages/auth/Signup";
 import ForgotPassword from "./pages/auth/ForgotPassword";
+import VerifyOTP from "./pages/auth/VerifyOTP";
+import ResetPassword from "./pages/auth/ResetPassword";
 import Products from "./pages/shop/Products";
 import ProductDetails from "./pages/shop/ProductDetails";
 import Cart from "./pages/shop/Cart";
 import Checkout from "./pages/shop/Checkout";
 import Address from "./pages/user/Address";
 import OrderSuccess from "./pages/user/OrderSuccess";
+import MyOrders from "./pages/user/MyOrders";
 import Wishlist from "./pages/user/Wishlist";
 import About from "./pages/shop/About";
 import {
@@ -55,13 +58,14 @@ const router = createBrowserRouter([
       { path: "/cart", element: <Cart /> },
       { path: "/checkout", element: <Checkout /> },
       { path: "/wishlist", element: <Wishlist /> },
+      { path: "/order-success", element: <OrderSuccess /> },
 
       // Protected Routes
       {
         element: <ProtectedRoute />,
         children: [
           { path: "/address", element: <Address /> }, // For managing addresses
-          { path: "/order-success", element: <OrderSuccess /> },
+          { path: "/my-orders", element: <MyOrders /> },
         ],
       },
     ],
@@ -73,6 +77,8 @@ const router = createBrowserRouter([
       { path: "login", element: <Login /> },
       { path: "signup", element: <Signup /> },
       { path: "forgot-password", element: <ForgotPassword /> },
+      { path: "verify-otp", element: <VerifyOTP /> },
+      { path: "reset-password", element: <ResetPassword /> },
     ],
   },
   // Admin Routes

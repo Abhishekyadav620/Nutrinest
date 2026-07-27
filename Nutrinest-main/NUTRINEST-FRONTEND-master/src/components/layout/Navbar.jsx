@@ -91,14 +91,23 @@ const Navbar = () => {
                 {user ? (
                   <>
                     <p className="font-bold text-gray-900 mb-0">
-                      {user.username}
+                      {user.name || user.username}
                     </p>
-                    <button
-                      onClick={handleLogout}
-                      className="text-gray-500 text-[10px] uppercase tracking-wider hover:text-red-500 transition-colors"
-                    >
-                      Logout
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <Link
+                        to="/my-orders"
+                        className="text-gray-500 text-[10px] uppercase tracking-wider hover:text-green-600 transition-colors"
+                      >
+                        My Orders
+                      </Link>
+                      <span className="text-gray-300">|</span>
+                      <button
+                        onClick={handleLogout}
+                        className="text-gray-500 text-[10px] uppercase tracking-wider hover:text-red-500 transition-colors"
+                      >
+                        Logout
+                      </button>
+                    </div>
                   </>
                 ) : (
                   <div>

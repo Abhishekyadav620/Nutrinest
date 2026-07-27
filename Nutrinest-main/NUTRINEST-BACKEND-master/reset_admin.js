@@ -4,14 +4,16 @@ require('dotenv').config();
 
 const reset = async () => {
     try {
-        await mongoose.connect(process.env.MONGO_URI);
+        await mongoose.connect(process.env.MONGODB_URI);
         console.log("Connected.");
 
-        const email = 'admin@nutrinest.com';
-        const password = 'nutrinest123';
+        const email = 'admin123@gmail.com';
+        const password = 'admin123';
 
-        // Find and remove to ensure clean slate or just update
-        await Admin.deleteOne({ email }); 
+        // Remove legacy admin accounts
+        await Admin.deleteMany({
+            email: { $in: ['admin_123', 'admin@nutrinest.com', email] },
+        });
         
         // Create fresh
         const admin = new Admin({ email, password });

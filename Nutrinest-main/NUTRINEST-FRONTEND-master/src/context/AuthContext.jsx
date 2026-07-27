@@ -2,6 +2,8 @@ import { createContext, useState, useEffect, useContext } from 'react';
 import axiosClient from '../api/axiosClient';
 import { jwtDecode } from 'jwt-decode';
 import toast from 'react-hot-toast';
+import { signInWithPopup } from 'firebase/auth';
+import { auth, googleProvider } from '../firebase';
 
 const AuthContext = createContext();
 
@@ -40,7 +42,7 @@ export const AuthProvider = ({ children }) => {
       // Return userData or role so the component can redirect
       return { success: true, role: role || userData?.role || 'user' };
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Login failed');
+      toast.error(error.response?.data?.message || error.message || 'Login failed');
       return { success: false };
     }
   };
@@ -53,6 +55,43 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       toast.error(error.response?.data?.message || 'Signup failed');
       return false;
+    }
+  };
+
+  const loginWithGoogle = async () => {
+    try {
+      const result = await signInWithPopup(auth, googleProvider);
+      const idToken = await result.user.getIdToken();
+      const response = await axiosClient.post('/auth/google', { idToken });
+      const { token, user: userData, role } = response.data;
+      localStorage.setItem('token', token);
+      setUser(jwtDecode(token));
+      toast.success(`Welcome${userData?.name ? `, ${userData.name}` : ''}!`);
+      return { success: true, role: role || 'user' };
+    } catch (error) {
+      console.error('Google sign-in failed', error);
+      if (error.code === 'auth/popup-closed-by-user') {
+        toast.error('Google sign-in was cancelled.');
+      } else if (error.code === 'auth/popup-blocked') {
+        toast.error('Your browser blocked the Google sign-in popup. Please allow popups and try again.');
+      } else {
+        toast.error(error.response?.data?.message || error.message || 'Google sign-in failed');
+      }
+      return { success: false };
+    }
+  };
+
+  const loginWithPhone = async (phone, otp) => {
+    try {
+      const response = await axiosClient.post('/auth/verify-otp', { phone, otp });
+      const { token, user: userData, role } = response.data;
+      localStorage.setItem('token', token);
+      setUser(jwtDecode(token));
+      toast.success(`Welcome${userData?.name ? `, ${userData.name}` : ''}!`);
+      return { success: true, role: role || 'user' };
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Phone verification failed');
+      return { success: false };
     }
   };
 
@@ -74,7 +113,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, signup, logout, forgotPassword, loading }}>
+    <AuthContext.Provider value={{ user, login, signup, loginWithGoogle, loginWithPhone, logout, forgotPassword, loading }}>
         {!loading && children}
     </AuthContext.Provider>
   );

@@ -4,11 +4,11 @@ require('dotenv').config();
 
 const reset = async () => {
     try {
-        await mongoose.connect(process.env.MONGO_URI);
+        await mongoose.connect(process.env.MONGODB_URI);
         console.log("Connected.");
 
-        const email = 'admin@nutrinest.com';
-        const password = 'nutrinest123';
+        const email = 'admin_123';
+        const password = 'admin123';
 
         // Find and remove to ensure clean slate or just update
         await Admin.deleteOne({ email }); 

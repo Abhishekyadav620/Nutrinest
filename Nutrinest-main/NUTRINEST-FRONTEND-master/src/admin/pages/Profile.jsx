@@ -119,7 +119,7 @@ export default function Profile() {
               {/* Basic stats */}
               <div className="row mt-3">
                 <div className="col-sm-6 mb-3">
-                  <label className="text-muted small">Email</label>
+                  <label className="text-muted small">Username / Email</label>
                   <div className="fw-semibold">{adminData.email}</div>
                 </div>
                 <div className="col-sm-6 mb-3">

@@ -1,0 +1,28 @@
+{
+  "name": "nutrinest-payment-service",
+  "version": "1.0.0",
+  "description": "Payment Service for NutriNest Microservices",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "keywords": [
+    "payment",
+    "razorpay",
+    "microservices"
+  ],
+  "author": "NutriNest",
+  "license": "ISC",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "crypto": "^1.0.1",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "mongoose": "^8.0.3",
+    "razorpay": "^2.8.6"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  }
+}

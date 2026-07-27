@@ -178,22 +178,28 @@ const Orders = () => {
                     {/* STATUS */}
                     <td className="px-6 py-4">
                       <select
-                        value={order.deliveryStatus || order.status}
+                        value={order.deliveryStatus || "Order Placed"}
                         onChange={(e) => updateStatus(order._id, e.target.value)}
                         className={`text-xs font-bold px-4 py-2 rounded-full border-0 outline-none cursor-pointer shadow-sm transition-all ${
-                          (order.deliveryStatus || order.status) === "delivered"
+                          order.deliveryStatus === "Delivered"
                             ? "bg-green-100 text-green-700 hover:bg-green-200"
-                            : (order.deliveryStatus || order.status) === "shipped"
+                            : order.deliveryStatus === "Shipped"
                             ? "bg-blue-100 text-blue-700 hover:bg-blue-200"
-                            : (order.deliveryStatus || order.status) === "cancelled"
+                            : order.deliveryStatus === "Out for Delivery"
+                            ? "bg-purple-100 text-purple-700 hover:bg-purple-200"
+                            : order.deliveryStatus === "Processing"
+                            ? "bg-yellow-100 text-yellow-700 hover:bg-yellow-200"
+                            : order.deliveryStatus === "Cancelled"
                             ? "bg-red-100 text-red-700 hover:bg-red-200"
-                            : "bg-amber-100 text-amber-700 hover:bg-amber-200"
+                            : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                         }`}
                       >
-                        <option value="pending">Not Completed</option>
-                        <option value="shipped">Shipped</option>
-                        <option value="delivered">Delivered</option>
-                        <option value="cancelled">Cancelled</option>
+                        <option value="Order Placed">Order Placed</option>
+                        <option value="Processing">Processing</option>
+                        <option value="Shipped">Shipped</option>
+                        <option value="Out for Delivery">Out for Delivery</option>
+                        <option value="Delivered">Delivered</option>
+                        <option value="Cancelled">Cancelled</option>
                       </select>
                     </td>
 

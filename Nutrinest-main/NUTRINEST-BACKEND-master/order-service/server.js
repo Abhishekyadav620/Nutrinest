@@ -11,7 +11,7 @@ const adminOrderRoutes = require("./routes/adminOrders");
 const app = express();
 connectDB();
 
-const PORT = process.env.ORDER_SERVICE_PORT || 5004;
+const PORT = process.env.PORT || process.env.ORDER_SERVICE_PORT || 5004;
 const http = require("http");
 const server = http.createServer(app);
 

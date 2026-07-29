@@ -56,7 +56,7 @@ app.use((req, res) => {
   });
 });
 
-const PORT = process.env.REVIEW_SERVICE_PORT || 5006;
+const PORT = process.env.PORT || process.env.REVIEW_SERVICE_PORT || 5006;
 
 app.listen(PORT, () => {
   console.log(`

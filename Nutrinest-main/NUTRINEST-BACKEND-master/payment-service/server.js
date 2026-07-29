@@ -56,7 +56,7 @@ app.use((req, res) => {
   });
 });
 
-const PORT = process.env.PAYMENT_SERVICE_PORT || 5005;
+const PORT = process.env.PORT || process.env.PAYMENT_SERVICE_PORT || 5005;
 
 app.listen(PORT, () => {
   console.log(`

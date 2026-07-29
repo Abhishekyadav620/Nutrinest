@@ -198,4 +198,20 @@ const proxyConfig = {
   },
 };
 
+// Intercept proxy responses to strip target CORS headers and prevent duplicates with the Gateway's own CORS configuration.
+Object.keys(proxyConfig).forEach((route) => {
+  const originalOnProxyRes = proxyConfig[route].onProxyRes;
+  proxyConfig[route].onProxyRes = (proxyRes, req, res) => {
+    delete proxyRes.headers["access-control-allow-origin"];
+    delete proxyRes.headers["access-control-allow-credentials"];
+    delete proxyRes.headers["access-control-allow-methods"];
+    delete proxyRes.headers["access-control-allow-headers"];
+
+    if (typeof originalOnProxyRes === "function") {
+      originalOnProxyRes(proxyRes, req, res);
+    }
+  };
+});
+
 module.exports = proxyConfig;
+

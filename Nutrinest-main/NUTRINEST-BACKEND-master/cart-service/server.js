@@ -56,7 +56,7 @@ app.use((req, res) => {
   });
 });
 
-const PORT = process.env.CART_SERVICE_PORT || 5003;
+const PORT = process.env.PORT || process.env.CART_SERVICE_PORT || 5003;
 
 app.listen(PORT, () => {
   console.log(`

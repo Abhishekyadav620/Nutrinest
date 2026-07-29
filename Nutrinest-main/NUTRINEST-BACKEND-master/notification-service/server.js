@@ -56,7 +56,7 @@ app.use((req, res) => {
   });
 });
 
-const PORT = process.env.NOTIFICATION_SERVICE_PORT || 5007;
+const PORT = process.env.PORT || process.env.NOTIFICATION_SERVICE_PORT || 5007;
 
 app.listen(PORT, () => {
   console.log(`

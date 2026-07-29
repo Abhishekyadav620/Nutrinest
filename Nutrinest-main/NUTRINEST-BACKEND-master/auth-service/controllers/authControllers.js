@@ -191,6 +191,9 @@ exports.sendOTP = async (req, res) => {
 
     if (phone) {
       const { twilioClient, verifyServiceSid } = require("../config/twilio");
+      if (!twilioClient) {
+        return res.status(503).json({ message: "Twilio SMS service is not configured on the server." });
+      }
       const cleanPhone = phone.replace(/\s+/g, "");
       
       await twilioClient.verify.v2
@@ -236,6 +239,9 @@ exports.verifyOTP = async (req, res) => {
 
     if (phone) {
       const { twilioClient, verifyServiceSid } = require("../config/twilio");
+      if (!twilioClient) {
+        return res.status(503).json({ message: "Twilio SMS service is not configured on the server." });
+      }
       const cleanPhone = phone.replace(/\s+/g, "");
 
       const verificationCheck = await twilioClient.verify.v2
